@@ -15,11 +15,7 @@ import sys
 import os
 
 from readingData import create_distribution_system, DistributionSystem
-
-import gurobipy as gb
-from gurobipy import GRB, Model, quicksum
-import pandas as pd
-import numpy as np
+from model import model_builder
 
 # default inputs if not provided
 directory = "C:\\Users\\sakit\\Documents\\Academic\\Research\\CoordinationSystem\\CoordinationDisSys\\"
@@ -66,13 +62,17 @@ i = 1
 while len(os.listdir(input_dir)) >= i:
 
     distribution_systems = DistributionSystem(system_name + str(i))
+    system_name = system_name + str(i)
 
-    if not os.path.exists(input_dir + system_name + f"{i}\\"):
+    if not os.path.exists(input_dir + system_name + "\\"):
         print(f"{system_name + str(i)} does not exists!")
         sys.exit()
     else:
-        file_path = input_dir + system_name + f"{i}\\"
-        distribution_systems = create_distribution_system(file_path)
+        file_path = input_dir + system_name + "\\"
+        distribution_systems = create_distribution_system(file_path, system_name)
+
+        model_builder(distribution_systems, output_dir)
+
         if num_systems == i:
             sys.exit()
         i += 1
