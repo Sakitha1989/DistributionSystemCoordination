@@ -7,7 +7,9 @@
 # model development
 
 import gurobipy as gb
-from gurobipy import GRB, Model, quicksum
+from gurobipy import GRB, quicksum
+
+from solution import update_solution
 
 
 class DistributionSystemModel(object):
@@ -15,6 +17,7 @@ class DistributionSystemModel(object):
         self.name = system.name
         self.model = gb.Model(system.name)
         self.modelSense = gb.GRB.MINIMIZE
+        self.model.setParam('LogToConsole', 0)
 
         # variables
         self.active_generation = self.model.addVars(system.numGenerators, lb=0, vtype=GRB.CONTINUOUS,
@@ -31,7 +34,7 @@ class DistributionSystemModel(object):
         self.model.update()
 
         # objective function
-        self.model.setObjective(quicksum(system.generators[i].cost * self.active_generation[i]
+        self.model.setObjective(quicksum(system.generators[i].cost * self.active_generation[i]**2
                                          for i in self.active_generation)
                                 - system.VOLL * (quicksum(self.active_load[i] for i in self.active_load)))
 
@@ -52,7 +55,6 @@ class DistributionSystemModel(object):
 
             self.model.addConstr(expression == 0, name=f"Active_Flow_Balance[{b}]")
 
-            expression = 0
             expression = quicksum(self.reactive_generation[g] if system.generators[g].bus == b + 1 else 0
                                   for g in range(system.numGenerators)) \
                 - quicksum(self.reactive_load[d] if system.loads[d].bus == b+1 else 0 for d in range(system.numLoads)) \
@@ -92,8 +94,9 @@ class DistributionSystemModel(object):
         self.model.update()
 
 
-def model_builder(system, output_dir) -> None:
-    print(system.numGenerators)
+def model_builder(system, output_dir):
+
     system_model = DistributionSystemModel(system)
-    system_model.model.optimize()
-    print(system_model.active_generation[0])
+    solution = update_solution(system_model)
+
+    return solution

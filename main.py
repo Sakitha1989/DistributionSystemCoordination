@@ -62,16 +62,16 @@ i = 1
 while len(os.listdir(input_dir)) >= i:
 
     distribution_systems = DistributionSystem(system_name + str(i))
-    system_name = system_name + str(i)
 
-    if not os.path.exists(input_dir + system_name + "\\"):
+    if not os.path.exists(input_dir + system_name + f"{i}\\"):
         print(f"{system_name + str(i)} does not exists!")
         sys.exit()
     else:
-        file_path = input_dir + system_name + "\\"
+        file_path = input_dir + system_name + f"{i}\\"
         distribution_systems = create_distribution_system(file_path, system_name)
 
-        model_builder(distribution_systems, output_dir)
+        solution = model_builder(distribution_systems, output_dir)
+        print(solution.objective_value)
 
         if num_systems == i:
             sys.exit()
