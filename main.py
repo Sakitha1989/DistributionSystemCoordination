@@ -14,31 +14,34 @@
 import sys
 import os
 
-from readingData import create_distribution_system, DistributionSystem
-from model import model_builder
+from readingData import create_distribution_system, create_transmission_system, DistributionSystem
+from model import *
+from solution import update_distribution_system_solution, DistributionSystemSolution, TransmissionSolution, \
+    update_transmission_system_solution
 
 # default inputs if not provided
 directory = "C:\\Users\\sakit\\Documents\\Academic\\Research\\CoordinationSystem\\CoordinationDisSys\\"
 network_name = "Test"
 system_name = "System1"
 num_systems = 2
+num_iterations = 2
 input_dir = ""
 output_dir = ""
 
 
 def cmdinputs() -> None:
-    global directory, network_name, system_name, num_systems, input_dir, output_dir
+    global directory, network_name, system_name, num_systems, num_iterations, input_dir, output_dir
 
     if len(sys.argv) >= 2:
         if not os.path.exists(sys.argv[1]):
-            print(f"{directory} Directory does not exists!")
+            print(f"{sys.argv[1]}, Directory does not exists!")
             sys.exit()
         else:
             directory = sys.argv[1]
             input_dir = directory + "inputData\\"
             if len(sys.argv) >= 3:
                 if not os.path.exists(input_dir + sys.argv[2] + "\\"):
-                    print(f"{network_name} does not exists!")
+                    print(f"{sys.argv[2]} network does not exists!")
                     sys.exit()
                 else:
                     network_name = sys.argv[2]
@@ -46,9 +49,16 @@ def cmdinputs() -> None:
                 if len(sys.argv) >= 4:
                     system_name = sys.argv[3]
                     if len(sys.argv) >= 5:
-                        num_systems = int(sys.argv[4])
+                        if len(os.listdir(input_dir)) >= int(sys.argv[4]):
+                            num_systems = int(sys.argv[4])
+                        else:
+                            print("Invalid number of systems! The program will run for the available number of systems.")
+                            num_systems = len(os.listdir(input_dir))
+                        if len(sys.argv) >= 6:
+                            num_iterations = int(sys.argv[5])
 
     output_dir = directory + "outputData\\" + network_name + "\\"
+    os.chdir(output_dir)
 
     # Create system folder in the output directory if it does not exist
     if not os.path.exists(output_dir):
@@ -56,23 +66,39 @@ def cmdinputs() -> None:
         print("Directory: ", output_dir, " Created ")
 
 
+# reading command line arguments
 cmdinputs()
 
-i = 1
-while len(os.listdir(input_dir)) >= i:
+# transmission system attributes
+transmission_system = create_transmission_system(input_dir, network_name)
+transmission_system_solution = TransmissionSolution(transmission_system.numBuses)
 
-    distribution_systems = DistributionSystem(system_name + str(i))
+# distribution systems attributes
+distribution_system = [DistributionSystem] * num_systems
+distribution_system_model = [DistributionSystemModel] * num_systems
+distribution_system_solution = [DistributionSystemSolution] * num_systems
 
-    if not os.path.exists(input_dir + system_name + f"{i}\\"):
-        print(f"{system_name + str(i)} does not exists!")
-        sys.exit()
-    else:
-        file_path = input_dir + system_name + f"{i}\\"
-        distribution_systems = create_distribution_system(file_path, system_name)
+for iteration_count in range(num_iterations):
 
-        solution = model_builder(distribution_systems, output_dir)
-        print(solution.objective_value)
+    for system_number in range(num_systems):
 
-        if num_systems == i:
-            sys.exit()
-        i += 1
+        if iteration_count == 0:
+            if not os.path.exists(input_dir + system_name + f"{system_number+1}\\"):
+                print(f"{system_name + str(system_number+1)} does not exists!")
+                sys.exit()
+            else:
+                file_path = input_dir + system_name + f"{system_number+1}\\"
+                distribution_system[system_number] = create_distribution_system(file_path, system_name + f"{system_number+1}")
+
+                distribution_system_model[system_number] = create_distribution_system_model(distribution_system[system_number], transmission_system, transmission_system_solution)
+                init_distribution_system_solution = DistributionSystemSolution()
+                distribution_system_solution[system_number] = update_distribution_system_solution(init_distribution_system_solution, distribution_system_model[system_number], iteration_count)
+
+        else:
+            distribution_system_model[system_number] = update_distribution_system_model(distribution_system_model[system_number], distribution_system[system_number], transmission_system, transmission_system_solution)
+            distribution_system_solution[system_number] = update_distribution_system_solution(distribution_system_solution[system_number], distribution_system_model[system_number], iteration_count)
+
+        transmission_system_solution = update_transmission_system_solution(transmission_system_solution, distribution_system_solution[system_number], transmission_system, distribution_system[system_number])
+
+        if num_systems == system_number:
+            break
