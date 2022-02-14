@@ -11,13 +11,18 @@
 # The script assumes that there are 'inputData' and 'outputData' folders exist inside the directory. Also, inside the
 # 'inputData' folder there must be folder for the system containing all the data files.
 
-import sys
 import os
+import sys
 
-from readingData import create_distribution_system, create_transmission_system, DistributionSystem
+import numpy as np
+import numpy.random
+
 from model import *
+from readingData import create_distribution_system, create_transmission_system, DistributionSystem
 from solution import update_distribution_system_solution, DistributionSystemSolution, TransmissionSolution, \
     update_transmission_system_solution
+
+np.random.seed(10)
 
 # default inputs if not provided
 directory = "C:\\Users\\sakit\\Documents\\Academic\\Research\\CoordinationSystem\\CoordinationDisSys\\"
@@ -69,6 +74,10 @@ def cmdinputs() -> None:
 # reading command line arguments
 cmdinputs()
 
+probability_list = np.random.dirichlet(np.ones(num_systems), size=1)
+system_list = list(np.arange(0, num_systems))
+system_list = [x for _, x in sorted(zip(probability_list[0], system_list), reverse=True)]
+
 # transmission system attributes
 transmission_system = create_transmission_system(input_dir, network_name)
 transmission_system_solution = TransmissionSolution(transmission_system.numBuses)
@@ -80,7 +89,7 @@ distribution_system_solution = [DistributionSystemSolution] * num_systems
 
 for iteration_count in range(num_iterations):
 
-    for system_number in range(num_systems):
+    for system_number in system_list:
 
         if iteration_count == 0:
             if not os.path.exists(input_dir + system_name + f"{system_number+1}\\"):

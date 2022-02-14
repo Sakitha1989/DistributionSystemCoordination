@@ -36,16 +36,15 @@ class DistributionSystemModel(object):
         self.model.update()
 
         # objective function
-        obj_expr2 = 0
-        obj_expr1 = quicksum(distribution_system.generators[i].cost * self.active_generation[i] for i in self.active_generation) \
-                    - distribution_system.VOLL * (quicksum(self.active_load[i] for i in self.active_load))
+        expression = 0
         for i in range(distribution_system.numTransmissionLines):
-            obj_expr2 += quicksum(transmission_system.bus_constant*(self.transmission_line_susceptance[i]**2) +
+            expression += quicksum(transmission_system.bus_constant*(self.transmission_line_susceptance[i]**2) +
               transmission_system_solution.capacity_at_bus[t]*self.transmission_line_susceptance[i]
               if distribution_system.transmission_lines[i].destination == transmission_system.buses[t].id else 0
               for t in range(transmission_system.numBuses))
 
-        self.model.setObjective(obj_expr1 + obj_expr2)
+        self.model.setObjective(quicksum(distribution_system.generators[i].cost * self.active_generation[i] for i in self.active_generation)
+                                - distribution_system.VOLL * (quicksum(self.active_load[i] for i in self.active_load)) + expression)
 
         # constraints
         for b in range(distribution_system.numBuses):
@@ -134,5 +133,8 @@ def update_distribution_system_model(model, distribution_system, transmission_sy
         for t in range(transmission_system.numBuses):
             if distribution_system.transmission_lines[i].destination == transmission_system.buses[t].id:
                 model.transmission_line_susceptance[i].Obj = transmission_system_solution.capacity_at_bus[t]
+
+    # TODO: expression for true flow through transmission line
+    # TODO: setting up quadratic term for the deviations
 
     return model
