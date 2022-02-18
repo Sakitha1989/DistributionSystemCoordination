@@ -29,22 +29,15 @@ class DistributionSystemModel(object):
                                                                 name=f"Distribution_Line_Susceptance")
         self.distribution_line_conductance = self.model.addMVar(distribution_system.numDistributionLines, lb=0, vtype=GRB.CONTINUOUS,
                                                                 name=f"Distribution_Line_Conductance")
-        self.transmission_line_susceptance = self.model.addMVar(distribution_system.numTransmissionLines, lb=0, vtype=GRB.CONTINUOUS,
-                                                                name=f"Transmission_Line_Susceptance")
-        self.transmission_line_conductance = self.model.addMVar(distribution_system.numTransmissionLines, lb=0, vtype=GRB.CONTINUOUS,
-                                                                name=f"Transmission_Line_Conductance")
+        self.active_line_transmission = self.model.addMVar(distribution_system.numTransmissionLines, lb=-99999, vtype=GRB.CONTINUOUS,
+                                                                name=f"Active_Line_Transmission")
+        self.reactive_line_transmission = self.model.addMVar(distribution_system.numTransmissionLines, lb=-99999, vtype=GRB.CONTINUOUS,
+                                                                name=f"Reactive_Line_Transmission")
         self.model.update()
 
         # objective function
-        expression = 0
-        for i in range(distribution_system.numTransmissionLines):
-            expression += quicksum(transmission_system.bus_constant*(self.transmission_line_susceptance[i]**2) +
-              transmission_system_solution.capacity_at_bus[t]*self.transmission_line_susceptance[i]
-              if distribution_system.transmission_lines[i].destination == transmission_system.buses[t].id else 0
-              for t in range(transmission_system.numBuses))
-
         self.model.setObjective(quicksum(distribution_system.generators[i].cost * self.active_generation[i] for i in self.active_generation)
-                                - distribution_system.VOLL * (quicksum(self.active_load[i] for i in self.active_load)) + expression)
+                                - distribution_system.VOLL * (quicksum(self.active_load[i] for i in self.active_load)))
 
         # constraints
         for b in range(distribution_system.numBuses):
@@ -59,14 +52,8 @@ class DistributionSystemModel(object):
                            if distribution_system.distribution_lines[e].destination == b+1 else 0 for e in range(distribution_system.numDistributionLines)) \
                 + quicksum(distribution_system.distribution_lines[e].susceptance * self.distribution_line_susceptance[e]
                            if distribution_system.distribution_lines[e].destination == b+1 else 0 for e in range(distribution_system.numDistributionLines)) \
-                - quicksum(distribution_system.transmission_lines[e].conductance * self.transmission_line_conductance[e]
+                - quicksum(self.active_line_transmission[e]
                            if distribution_system.transmission_lines[e].source == b + 1 else 0 for e in range(distribution_system.numTransmissionLines)) \
-                + quicksum(distribution_system.transmission_lines[e].susceptance * self.transmission_line_susceptance[e]
-                           if distribution_system.transmission_lines[e].source == b + 1 else 0 for e in range(distribution_system.numTransmissionLines)) \
-                - quicksum(distribution_system.transmission_lines[e].conductance * self.transmission_line_conductance[e]
-                           if distribution_system.transmission_lines[e].destination == b + 1 else 0 for e in range(distribution_system.numTransmissionLines)) \
-                + quicksum(distribution_system.transmission_lines[e].susceptance * self.transmission_line_susceptance[e]
-                           if distribution_system.transmission_lines[e].destination == b + 1 else 0 for e in range(distribution_system.numTransmissionLines)) \
                 - distribution_system.buses[b].conductance * self.bus_voltage[b]
 
             self.model.addConstr(expression == 0, name=f"Active_Flow_Balance[{b}]")
@@ -82,14 +69,8 @@ class DistributionSystemModel(object):
                            if distribution_system.distribution_lines[e].destination == b+1 else 0 for e in range(distribution_system.numDistributionLines)) \
                 - quicksum(distribution_system.distribution_lines[e].conductance * self.distribution_line_susceptance[e]
                            if distribution_system.distribution_lines[e].destination == b+1 else 0 for e in range(distribution_system.numDistributionLines)) \
-                + quicksum(distribution_system.transmission_lines[e].susceptance * self.distribution_line_conductance[e]
+                + quicksum(self.reactive_line_transmission[e]
                            if distribution_system.transmission_lines[e].source == b + 1 else 0 for e in range(distribution_system.numTransmissionLines)) \
-                + quicksum(distribution_system.transmission_lines[e].conductance * self.distribution_line_susceptance[e]
-                           if distribution_system.transmission_lines[e].source == b + 1 else 0 for e in range(distribution_system.numTransmissionLines)) \
-                - quicksum(distribution_system.transmission_lines[e].susceptance * self.distribution_line_conductance[e]
-                           if distribution_system.transmission_lines[e].destination == b + 1 else 0 for e in range(distribution_system.numTransmissionLines)) \
-                - quicksum(distribution_system.transmission_lines[e].conductance * self.distribution_line_susceptance[e]
-                           if distribution_system.transmission_lines[e].destination == b + 1 else 0 for e in range(distribution_system.numTransmissionLines)) \
                 + distribution_system.buses[b].susceptance * self.bus_voltage[b]
 
             self.model.addConstr(expression == 0, name=f"Reactive_Flow_Balance[{b}]")
@@ -119,22 +100,30 @@ class DistributionSystemModel(object):
         self.model.write(self.name + '.lp')
 
 
-def create_distribution_system_model(distribution_system, transmission_system, transmission_system_solution):
+    def update_distribution_system_model(self, distribution_system, distribution_system_solution, transmission_system, transmission_system_solution):
 
-    system_model = DistributionSystemModel(distribution_system, transmission_system, transmission_system_solution)
+        # objective function
+        expression = quicksum(distribution_system.generators[i].cost * self.active_generation[i] for i in self.active_generation)\
+                     - distribution_system.VOLL * (quicksum(self.active_load[i] for i in self.active_load))
 
-    return system_model
+        for i in range(distribution_system.numTransmissionLines):
+            expression += quicksum(self.active_line_transmission[i] * transmission_system_solution.capacity_at_bus[t]
+                        if distribution_system.transmission_lines[i].destination == transmission_system.buses[t].id else 0
+                        for t in range(transmission_system.numBuses))
 
+        for i in range(distribution_system.numTransmissionLines):
+            expression += quicksum(transmission_system.bus_constant * (self.active_line_transmission[i] ** 2) +
+                                   transmission_system_solution.capacity_at_bus[t] * self.active_line_transmission[i]
+                                   if distribution_system.transmission_lines[i].destination == transmission_system.buses[t].id else 0
+                                   for t in range(transmission_system.numBuses))
 
-def update_distribution_system_model(model, distribution_system, transmission_system, transmission_system_solution):
+        for i in range(distribution_system.numTransmissionLines):
+            expression += (distribution_system_solution.active_line_transmission[i] - self.active_line_transmission[i]) ** 2
 
-    # objective function
-    for i in range(distribution_system.numTransmissionLines):
-        for t in range(transmission_system.numBuses):
-            if distribution_system.transmission_lines[i].destination == transmission_system.buses[t].id:
-                model.transmission_line_susceptance[i].Obj = transmission_system_solution.capacity_at_bus[t]
+        for i in range(distribution_system.numGenerators):
+            expression += (distribution_system_solution.active_generation[i] - self.active_generation[i]) ** 2
 
-    # TODO: expression for true flow through transmission line
-    # TODO: setting up quadratic term for the deviations
+        for i in range(distribution_system.numLoads):
+            expression += (distribution_system_solution.active_load[i] - self.active_load[i]) ** 2
 
-    return model
+        self.model.setObjective(expression)

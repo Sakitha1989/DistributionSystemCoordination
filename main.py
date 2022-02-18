@@ -18,9 +18,8 @@ import numpy as np
 import numpy.random
 
 from model import *
-from readingData import create_distribution_system, create_transmission_system, DistributionSystem
-from solution import update_distribution_system_solution, DistributionSystemSolution, TransmissionSolution, \
-    update_transmission_system_solution
+from readingData import DistributionSystem, TransmissionSystem
+from solution import DistributionSystemSolution, TransmissionSolution
 
 np.random.seed(10)
 
@@ -74,12 +73,15 @@ def cmdinputs() -> None:
 # reading command line arguments
 cmdinputs()
 
+total_cost = []
+
 probability_list = np.random.dirichlet(np.ones(num_systems), size=1)
 system_list = list(np.arange(0, num_systems))
 system_list = [x for _, x in sorted(zip(probability_list[0], system_list), reverse=True)]
 
 # transmission system attributes
-transmission_system = create_transmission_system(input_dir, network_name)
+transmission_system = TransmissionSystem(network_name)
+transmission_system.create_transmission_system(input_dir)
 transmission_system_solution = TransmissionSolution(transmission_system.numBuses)
 
 # distribution systems attributes
@@ -89,6 +91,9 @@ distribution_system_solution = [DistributionSystemSolution] * num_systems
 
 for iteration_count in range(num_iterations):
 
+    cost = 0
+    comparison = []
+
     for system_number in system_list:
 
         if iteration_count == 0:
@@ -97,17 +102,31 @@ for iteration_count in range(num_iterations):
                 sys.exit()
             else:
                 file_path = input_dir + system_name + f"{system_number+1}\\"
-                distribution_system[system_number] = create_distribution_system(file_path, system_name + f"{system_number+1}")
+                distribution_system[system_number] = DistributionSystem(system_name + f"{system_number+1}")
+                distribution_system[system_number].create_distribution_system(file_path)
 
-                distribution_system_model[system_number] = create_distribution_system_model(distribution_system[system_number], transmission_system, transmission_system_solution)
-                init_distribution_system_solution = DistributionSystemSolution()
-                distribution_system_solution[system_number] = update_distribution_system_solution(init_distribution_system_solution, distribution_system_model[system_number], iteration_count)
+                distribution_system_solution[system_number] = DistributionSystemSolution()
+                distribution_system_model[system_number] = DistributionSystemModel(distribution_system[system_number], transmission_system, transmission_system_solution)
+                distribution_system_solution[system_number].update_distribution_system_solution(distribution_system_model[system_number], iteration_count)
+                cost += distribution_system_solution[system_number].objective_value
 
         else:
-            distribution_system_model[system_number] = update_distribution_system_model(distribution_system_model[system_number], distribution_system[system_number], transmission_system, transmission_system_solution)
-            distribution_system_solution[system_number] = update_distribution_system_solution(distribution_system_solution[system_number], distribution_system_model[system_number], iteration_count)
+            distribution_system_model[system_number].update_distribution_system_model(distribution_system[system_number],
+                                                                                        distribution_system_solution[system_number], transmission_system, transmission_system_solution)
+            distribution_system_solution[system_number].update_distribution_system_solution(distribution_system_model[system_number], iteration_count)
+            cost += distribution_system_solution[system_number].objective_value
 
-        transmission_system_solution = update_transmission_system_solution(transmission_system_solution, distribution_system_solution[system_number], transmission_system, distribution_system[system_number])
+        transmission_system_solution.update_transmission_system_solution(distribution_system_solution[system_number], transmission_system, distribution_system[system_number])
+
+        total_cost.append(cost)
+        comparison.append(distribution_system_solution[system_number])
 
         if num_systems == system_number:
             break
+
+    if not any(comparison):
+        break
+
+print(f"Iteration count: {iteration_count+1}")
+print(f"Total cost gap: {(total_cost[iteration_count-1] - total_cost[iteration_count])/total_cost[iteration_count-1]}")
+print(f"Total cost: {total_cost[iteration_count]}")

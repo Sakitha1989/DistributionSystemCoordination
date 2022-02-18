@@ -77,6 +77,38 @@ class DistributionSystem(object):
         self.distribution_lines = []
         self.transmission_lines = []
 
+    def create_distribution_system(self, input_dir):
+
+        # list of file names to read
+        file_list = ["genData", "loadData", "busData", "lineData"]
+
+        for file_name in file_list:
+            if not os.path.exists(input_dir + file_name + ".csv"):
+                print(f"{file_name} does not exists!")
+            else:
+                with open(input_dir + file_name + ".csv", 'r') as file:
+                    data = csv.DictReader(file)
+                    if file_name == "genData":
+                        for row in data:
+                            self.generators.append(Generator(row))
+                            self.numGenerators += 1
+                    elif file_name == "loadData":
+                        for row in data:
+                            self.loads.append(Load(row))
+                            self.numLoads += 1
+                    elif file_name == "busData":
+                        for row in data:
+                            self.buses.append(Bus(row))
+                            self.numBuses += 1
+                    elif file_name == "lineData":
+                        for row in data:
+                            if row['lineType'] == 'd':
+                                self.distribution_lines.append(Line(row))
+                                self.numDistributionLines += 1
+                            elif row['lineType'] == 't':
+                                self.transmission_lines.append(Line(row))
+                                self.numTransmissionLines += 1
+
 
 class TransmissionSystem(object):
     def __init__(self, system_name):
@@ -85,55 +117,13 @@ class TransmissionSystem(object):
         self.bus_constant = 10
         self.buses = []
 
+    def create_transmission_system(self, input_dir):
 
-def create_transmission_system(input_dir, system_name):
-
-    transmission_system = TransmissionSystem(system_name)
-
-    if not os.path.exists(input_dir + "transmissionData.csv"):
-        print(f"{system_name} does not exists!")
-    else:
-        with open(input_dir + "transmissionData.csv", 'r') as file:
-            data = csv.DictReader(file)
-            for row in data:
-                transmission_system.buses.append(Bus(row))
-                transmission_system.numBuses += 1
-
-    return transmission_system
-
-
-def create_distribution_system(input_dir, system_name):
-
-    distribution_system = DistributionSystem(system_name)
-
-    # list of file names to read
-    file_list = ["genData", "loadData", "busData", "lineData"]
-
-    for file_name in file_list:
-        if not os.path.exists(input_dir + file_name + ".csv"):
-            print(f"{file_name} does not exists!")
+        if not os.path.exists(input_dir + "transmissionData.csv"):
+            print(f"{self.name} does not exists!")
         else:
-            with open(input_dir + file_name + ".csv", 'r') as file:
+            with open(input_dir + "transmissionData.csv", 'r') as file:
                 data = csv.DictReader(file)
-                if file_name == "genData":
-                    for row in data:
-                        distribution_system.generators.append(Generator(row))
-                        distribution_system.numGenerators += 1
-                elif file_name == "loadData":
-                    for row in data:
-                        distribution_system.loads.append(Load(row))
-                        distribution_system.numLoads += 1
-                elif file_name == "busData":
-                    for row in data:
-                        distribution_system.buses.append(Bus(row))
-                        distribution_system.numBuses += 1
-                elif file_name == "lineData":
-                    for row in data:
-                        if row['lineType'] == 'd':
-                            distribution_system.distribution_lines.append(Line(row))
-                            distribution_system.numDistributionLines += 1
-                        elif row['lineType'] == 't':
-                            distribution_system.transmission_lines.append(Line(row))
-                            distribution_system.numTransmissionLines += 1
-
-    return distribution_system
+                for row in data:
+                    self.buses.append(Bus(row))
+                    self.numBuses += 1
