@@ -11,7 +11,7 @@ from gurobipy import GRB, quicksum
 
 
 class DistributionSystemModel(object):
-    def __init__(self, distribution_system, transmission_system, transmission_system_solution):
+    def __init__(self, distribution_system):
         self.name = distribution_system.name
         self.model = gb.Model(distribution_system.name)
         self.modelSense = gb.GRB.MINIMIZE
@@ -107,13 +107,13 @@ class DistributionSystemModel(object):
                      - distribution_system.VOLL * (quicksum(self.active_load[i] for i in self.active_load))
 
         for i in range(distribution_system.numTransmissionLines):
-            expression += quicksum(self.active_line_transmission[i] * transmission_system_solution.capacity_at_bus[t]
+            expression -= quicksum(self.active_line_transmission[i] * (transmission_system.buses[t].constant_payment
+                                                                       + transmission_system.buses[t].variable_payment * transmission_system_solution.capacity_at_bus[t])
                         if distribution_system.transmission_lines[i].destination == transmission_system.buses[t].id else 0
                         for t in range(transmission_system.numBuses))
 
         for i in range(distribution_system.numTransmissionLines):
-            expression += quicksum(transmission_system.bus_constant * (self.active_line_transmission[i] ** 2) +
-                                   transmission_system_solution.capacity_at_bus[t] * self.active_line_transmission[i]
+            expression += quicksum(transmission_system.buses[t].variable_payment * (self.active_line_transmission[i] ** 2)
                                    if distribution_system.transmission_lines[i].destination == transmission_system.buses[t].id else 0
                                    for t in range(transmission_system.numBuses))
 

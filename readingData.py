@@ -38,6 +38,13 @@ class Bus(object):
         self.conductance = float(attribute_list['busConductance'])
 
 
+class TransmissionBus(Bus):
+    def __init__(self, attribute_list):
+        super(TransmissionBus, self).__init__(attribute_list)
+        self.constant_payment = int(attribute_list['busConstantPay'])
+        self.variable_payment = int(attribute_list['busVariablePay'])
+
+
 class Line(object):
     def __init__(self, attribute_list):
         self.id = attribute_list['lineId']
@@ -114,7 +121,6 @@ class TransmissionSystem(object):
     def __init__(self, system_name):
         self.name = system_name
         self.numBuses = 0
-        self.bus_constant = 10
         self.buses = []
 
     def create_transmission_system(self, input_dir):
@@ -125,5 +131,5 @@ class TransmissionSystem(object):
             with open(input_dir + "transmissionData.csv", 'r') as file:
                 data = csv.DictReader(file)
                 for row in data:
-                    self.buses.append(Bus(row))
+                    self.buses.append(TransmissionBus(row))
                     self.numBuses += 1

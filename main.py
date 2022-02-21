@@ -16,8 +16,9 @@ import sys
 
 import numpy as np
 import numpy.random
+import copy
 
-from model import *
+from model import DistributionSystemModel
 from readingData import DistributionSystem, TransmissionSystem
 from solution import DistributionSystemSolution, TransmissionSolution
 
@@ -53,11 +54,11 @@ def cmdinputs() -> None:
                 if len(sys.argv) >= 4:
                     system_name = sys.argv[3]
                     if len(sys.argv) >= 5:
-                        if len(os.listdir(input_dir)) >= int(sys.argv[4]):
+                        if len(os.listdir(input_dir))-1 >= int(sys.argv[4]):
                             num_systems = int(sys.argv[4])
                         else:
-                            print("Invalid number of systems! The program will run for the available number of systems.")
-                            num_systems = len(os.listdir(input_dir))
+                            print(f"Invalid number of systems! The program will run for the available number of systems, {len(os.listdir(input_dir))-1}.")
+                            num_systems = len(os.listdir(input_dir))-1
                         if len(sys.argv) >= 6:
                             num_iterations = int(sys.argv[5])
 
@@ -88,6 +89,7 @@ transmission_system_solution = TransmissionSolution(transmission_system.numBuses
 distribution_system = [DistributionSystem] * num_systems
 distribution_system_model = [DistributionSystemModel] * num_systems
 distribution_system_solution = [DistributionSystemSolution] * num_systems
+temporary_distribution_system_solution = DistributionSystemSolution()
 
 for iteration_count in range(num_iterations):
 
@@ -106,25 +108,25 @@ for iteration_count in range(num_iterations):
                 distribution_system[system_number].create_distribution_system(file_path)
 
                 distribution_system_solution[system_number] = DistributionSystemSolution()
-                distribution_system_model[system_number] = DistributionSystemModel(distribution_system[system_number], transmission_system, transmission_system_solution)
+                distribution_system_model[system_number] = DistributionSystemModel(distribution_system[system_number])
                 distribution_system_solution[system_number].update_distribution_system_solution(distribution_system_model[system_number], iteration_count)
                 cost += distribution_system_solution[system_number].objective_value
 
         else:
+            transmission_system_solution.update_transmission_system_solution(transmission_system, distribution_system[system_number],
+                                                                             distribution_system_solution[system_number], False)
             distribution_system_model[system_number].update_distribution_system_model(distribution_system[system_number],
                                                                                         distribution_system_solution[system_number], transmission_system, transmission_system_solution)
             distribution_system_solution[system_number].update_distribution_system_solution(distribution_system_model[system_number], iteration_count)
             cost += distribution_system_solution[system_number].objective_value
 
-        transmission_system_solution.update_transmission_system_solution(distribution_system_solution[system_number], transmission_system, distribution_system[system_number])
+        transmission_system_solution.update_transmission_system_solution(transmission_system, distribution_system[system_number],
+                                                                         distribution_system_solution[system_number], True)
 
-        total_cost.append(cost)
-        comparison.append(distribution_system_solution[system_number])
+    total_cost.append(cost)
+    comparison.append(distribution_system_solution[system_number].comparison_test)
 
-        if num_systems == system_number:
-            break
-
-    if not any(comparison):
+    if all(comparison):
         break
 
 print(f"Iteration count: {iteration_count+1}")
