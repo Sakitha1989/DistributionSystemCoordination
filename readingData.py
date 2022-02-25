@@ -12,30 +12,32 @@ import os
 
 class Generator(object):
     def __init__(self, attribute_list):
-        self.id = int(attribute_list['genId'])
-        self.bus = int(attribute_list['genBus'])
-        self.cost = float(attribute_list['genCost'])
-        self.active_max = float(attribute_list['genMaxReal'])
-        self.active_min = float(attribute_list['genMinReal'])
-        self.reactive_max = float(attribute_list['genMaxImagin'])
-        self.reactive_min = float(attribute_list['genMinImagin'])
+        self.id = int(attribute_list['bus'])
+        self.bus = int(attribute_list['bus'])
+        self.c3 = float(attribute_list['c(2)'])
+        self.c2 = float(attribute_list['c(1)'])
+        self.c1 = float(attribute_list['c(0)'])
+        self.active_max = float(attribute_list['Pmax'])
+        self.active_min = float(attribute_list['Pmin'])
+        self.reactive_max = float(attribute_list['Qmax'])
+        self.reactive_min = float(attribute_list['Qmin'])
 
 
 class Load(object):
     def __init__(self, attribute_list):
-        self.id = int(attribute_list['loadId'])
-        self.bus = int(attribute_list['loadBus'])
-        self.active_max = float(attribute_list['loadMaxReal'])
-        self.reactive_max = float(attribute_list['loadMaxImagin'])
+        self.id = int(attribute_list['bus_i'])
+        self.bus = int(attribute_list['bus_i'])
+        self.active_max = float(attribute_list['Pd'])
+        self.reactive_max = float(attribute_list['Qd'])
 
 
 class Bus(object):
     def __init__(self, attribute_list):
-        self.id = int(attribute_list['busId'])
-        self.min_voltage = float(attribute_list['busVmin'])
-        self.max_voltage = float(attribute_list['busVmax'])
-        self.susceptance = float(attribute_list['busSusceptance'])
-        self.conductance = float(attribute_list['busConductance'])
+        self.id = int(attribute_list['bus_i'])
+        self.min_voltage = float(attribute_list['Vmin'])*float(attribute_list['baseKV'])
+        self.max_voltage = float(attribute_list['Vmax'])*float(attribute_list['baseKV'])
+        self.susceptance = float(attribute_list['Bs'])
+        self.conductance = float(attribute_list['Gs'])
 
 
 class TransmissionBus(Bus):
@@ -47,13 +49,12 @@ class TransmissionBus(Bus):
 
 class Line(object):
     def __init__(self, attribute_list):
-        self.id = attribute_list['lineId']
-        self.source = int(attribute_list['lineSource'])
-        self.destination = int(attribute_list['lineDestination'])
-        self.max_flow = float(attribute_list['lineMaxFlow'])
-        self.susceptance = float(attribute_list['lineSusceptance'])
-        self.conductance = float(attribute_list['lineConductance'])
-        self.type = attribute_list['lineType']
+        self.id = int(attribute_list['LineID'])
+        self.source = int(attribute_list['fbus'])
+        self.destination = int(attribute_list['tbus'])
+        self.max_flow = 99999
+        self.susceptance = 1/float(attribute_list['x'])
+        self.conductance = 1/float(attribute_list['r'])
 
 
 class DistributionLine(Line):
@@ -87,7 +88,7 @@ class DistributionSystem(object):
     def create_distribution_system(self, input_dir):
 
         # list of file names to read
-        file_list = ["genData", "loadData", "busData", "lineData"]
+        file_list = ["genData", "busData", "lineData"]
 
         for file_name in file_list:
             if not os.path.exists(input_dir + file_name + ".csv"):
@@ -99,14 +100,12 @@ class DistributionSystem(object):
                         for row in data:
                             self.generators.append(Generator(row))
                             self.numGenerators += 1
-                    elif file_name == "loadData":
-                        for row in data:
-                            self.loads.append(Load(row))
-                            self.numLoads += 1
                     elif file_name == "busData":
                         for row in data:
                             self.buses.append(Bus(row))
+                            self.loads.append(Load(row))
                             self.numBuses += 1
+                            self.numLoads += 1
                     elif file_name == "lineData":
                         for row in data:
                             if row['lineType'] == 'd':

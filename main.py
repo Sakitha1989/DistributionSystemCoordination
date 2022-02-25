@@ -16,7 +16,6 @@ import sys
 
 import numpy as np
 import numpy.random
-import copy
 
 from model import DistributionSystemModel
 from readingData import DistributionSystem, TransmissionSystem
@@ -63,7 +62,6 @@ def cmdinputs() -> None:
                             num_iterations = int(sys.argv[5])
 
     output_dir = directory + "outputData\\" + network_name + "\\"
-    os.chdir(output_dir)
 
     # Create system folder in the output directory if it does not exist
     if not os.path.exists(output_dir):
@@ -127,6 +125,7 @@ for iteration_count in range(num_iterations):
     comparison.append(distribution_system_solution[system_number].comparison_test)
 
     if all(comparison):
+        print("No improvement from previous solution!")
         break
 
 print(f"Iteration count: {iteration_count+1}")
