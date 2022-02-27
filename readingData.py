@@ -9,6 +9,8 @@
 import csv
 import os
 
+from print import print_distribution_system_details
+
 
 class Generator(object):
     def __init__(self, attribute_list):
@@ -114,6 +116,8 @@ class DistributionSystem(object):
                             elif row['lineType'] == 't':
                                 self.transmission_lines.append(Line(row))
                                 self.numTransmissionLines += 1
+
+        print_distribution_system_details(self)
 
 
 class TransmissionSystem(object):

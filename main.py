@@ -20,15 +20,16 @@ import numpy.random
 from model import DistributionSystemModel
 from readingData import DistributionSystem, TransmissionSystem
 from solution import DistributionSystemSolution, TransmissionSolution
+from print import print_results
 
 np.random.seed(10)
 
 # default inputs if not provided
 directory = "C:\\Users\\sakit\\Documents\\Academic\\Research\\CoordinationSystem\\CoordinationDisSys\\"
-network_name = "Test"
-system_name = "System1"
-num_systems = 2
-num_iterations = 2
+network_name = "IEEE"
+system_name = "IEEE"
+num_systems = 4
+num_iterations = 1000
 input_dir = ""
 output_dir = ""
 
@@ -68,6 +69,8 @@ def cmdinputs() -> None:
         os.mkdir(output_dir)
         print("Directory: ", output_dir, " Created ")
 
+    os.chdir(output_dir)
+
 
 # reading command line arguments
 cmdinputs()
@@ -76,7 +79,7 @@ total_cost = []
 
 probability_list = np.random.dirichlet(np.ones(num_systems), size=1)
 system_list = list(np.arange(0, num_systems))
-system_list = [x for _, x in sorted(zip(probability_list[0], system_list), reverse=True)]
+# system_list = [x for _, x in sorted(zip(probability_list[0], system_list), reverse=True)]
 
 # transmission system attributes
 transmission_system = TransmissionSystem(network_name)
@@ -125,9 +128,9 @@ for iteration_count in range(num_iterations):
     comparison.append(distribution_system_solution[system_number].comparison_test)
 
     if all(comparison):
+        print(" ")
         print("No improvement from previous solution!")
         break
 
-print(f"Iteration count: {iteration_count+1}")
-print(f"Total cost gap: {(total_cost[iteration_count-1] - total_cost[iteration_count])/total_cost[iteration_count-1]}")
-print(f"Total cost: {total_cost[iteration_count]}")
+print_results(iteration_count, total_cost)
+

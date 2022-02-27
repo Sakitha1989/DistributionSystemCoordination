@@ -49,7 +49,7 @@ class DistributionSystemSolution(object):
         self.name = model.name
 
         model.model.optimize()
-        print(model.model.status)
+        # print(model.model.status)
         self.objective_value = model.model.getObjective().getValue()
         for v in model.model.getVars():
             if 'Active_Generation' in v.varName:

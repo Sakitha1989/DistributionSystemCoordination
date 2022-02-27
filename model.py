@@ -121,12 +121,12 @@ class DistributionSystemModel(object):
                                    for t in range(transmission_system.numBuses))
 
         for i in range(distribution_system.numTransmissionLines):
-            expression += (distribution_system_solution.active_line_transmission[i] - self.active_line_transmission[i]) ** 2
+            expression += 0.5*(distribution_system_solution.active_line_transmission[i] - self.active_line_transmission[i]) ** 2
 
         for i in range(distribution_system.numGenerators):
-            expression += (distribution_system_solution.active_generation[i] - self.active_generation[i]) ** 2
+            expression += 0.5*(distribution_system_solution.active_generation[i] - self.active_generation[i]) ** 2
 
         for i in range(distribution_system.numLoads):
-            expression += (distribution_system_solution.active_load[i] - self.active_load[i]) ** 2
+            expression += 0.5*(distribution_system_solution.active_load[i] - self.active_load[i]) ** 2
 
         self.model.setObjective(expression)
