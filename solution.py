@@ -41,7 +41,7 @@ class DistributionSystemSolution(object):
         self.reactive_line_transmission = []
         self.comparison_test = False
 
-    def update_distribution_system_solution(self, model, header):
+    def update_distribution_system_solution(self, model, header, tolerance):
 
         previous_solution = copy.deepcopy(self)
         self.clear()
@@ -71,13 +71,13 @@ class DistributionSystemSolution(object):
             elif 'Reactive_Line_Transmission' in v.varName:
                 self.reactive_line_transmission.append(v.x)
 
-        tolerance = 0.05
         self.comparison_test = True if not header == 0 and self.name == previous_solution.name and \
-                                       percentage_gap_calculator([self.objective_value], [previous_solution.objective_value], tolerance) and \
-                                       percentage_gap_calculator(self.active_generation, previous_solution.active_generation, tolerance) and \
-                                       percentage_gap_calculator(self.active_load, previous_solution.active_load, tolerance) and \
-                                       percentage_gap_calculator(self.active_line_transmission,  previous_solution.active_line_transmission, tolerance) \
+                                       percentage_gap_calculator([self.objective_value], [previous_solution.objective_value], tolerance) \
                                        else False
+                                       # and percentage_gap_calculator(self.active_generation, previous_solution.active_generation, tolerance) \
+                                       # and percentage_gap_calculator(self.active_load, previous_solution.active_load, tolerance) \
+                                       # and percentage_gap_calculator(self.active_line_transmission,  previous_solution.active_line_transmission, tolerance) \
+                                       # else False
 
         distribution_solution_writer(model, header)
 
