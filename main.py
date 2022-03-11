@@ -31,13 +31,11 @@ output_dir = ""
 # main frame
 root = tk.Tk()
 root.title("Exchange Electricity")
-root.iconbitmap(
-    r"C:\Users\sakit\Documents\Academic\Research\CoordinationSystem\CoordinationDisSys\DisSys\images\appIcon.ico")
+root.iconbitmap(r"images/appIcon.ico")
 root.geometry("900x500")
 root.config(bg="#80c1ff")
 
 main_frame(root)
-
 
 button_exit = tk.Button(root, text="Exit", command=root.quit, bg="white", fg="black")
 button_exit.place(relx=0.9, rely=.93, relwidth=0.08, relheight=0.05)

@@ -13,7 +13,6 @@ import numpy.random
 from model import DistributionSystemModel
 from readingData import DistributionSystem, TransmissionSystem
 from solution import DistributionSystemSolution, TransmissionSolution
-from print import print_results
 from GUI import *
 
 
@@ -32,7 +31,7 @@ def read_system_data(input_dir, system_name, num_systems):
     return distribution_system
 
 
-def main_loop(distribution_system, input_dir, network_name, num_systems, num_iterations, deviation_penalty, tolerance, root):
+def main_loop(distribution_system, input_dir, network_name, num_systems, num_iterations, deviation_penalty, tolerance):
 
     probability_list = np.random.dirichlet(np.ones(num_systems), size=1)
     system_list = list(np.arange(0, num_systems))
@@ -78,5 +77,4 @@ def main_loop(distribution_system, input_dir, network_name, num_systems, num_ite
         if all(comparison):
             break
 
-    print_results(iteration_count, total_cost, root)
-    print(time.process_time() - start)
+    return {"iteration_count": iteration_count, "total_cost": total_cost}

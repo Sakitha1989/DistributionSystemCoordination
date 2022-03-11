@@ -41,7 +41,7 @@ def main_frame(root):
                         if response_system_number == 1:
                             num_systems = len(os.listdir(input_dir)) - 1
                         else:
-                            messagebox.showerror("System Error!", "Invalid number of systems.")
+                            pass
                 else:
                     messagebox.showerror("System Error!", "System does not exit.")
             else:
@@ -70,10 +70,6 @@ def main_frame(root):
             title="Select a directory")
         label_directory_display["text"] = filename
         scale_num_system.config(state="normal")
-
-    # background_image = tk.PhotoImage(file=r"C:\Users\sakit\Documents\Academic\Research\CoordinationSystem\CoordinationDisSys\DisSys\images\background.png")
-    # background_label = tk.Label(frame, image=background_image)
-    # background_label.place(relwidth=1, relheight=1)
 
     canvas_user_inputs = tk.Canvas(root, bg="#80c1ff")
     canvas_user_inputs.place(relx=0.075, rely=0.035, relwidth=0.87, relheight=0.25)

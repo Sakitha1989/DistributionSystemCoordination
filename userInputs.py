@@ -9,6 +9,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 from loops import read_system_data, main_loop
+from graphs import create_plots
 
 
 def user_inputs(directory, network_name, system_name, num_systems, root) -> None:
@@ -31,27 +32,32 @@ def user_inputs(directory, network_name, system_name, num_systems, root) -> None
 
 
 def network_details(root, distribution_systems):
-    def display_details():
 
-        system_name = listbox_distribution_systems.get("anchor")
+    def display_details(event):
 
-        for system in distribution_systems:
-            if system_name == system.name:
-                label_information.config(text=f"System name: \t\t{system.name} \n"
-                                              f"Number of buses: \t\t{system.numBuses} \n"
-                                              f"Number of generators: \t{system.numGenerators} \n"
-                                              f"Number of loads: \t\t{system.numLoads} \n"
-                                              f"Number of distribution lines: \t{system.numDistributionLines} \n"
-                                              f"Number of transmission lines: \t{system.numTransmissionLines}")
+        selection = event.widget.curselection()
+        if selection:
+            for system in distribution_systems:
+                if event.widget.get(selection[0]) == system.name:
+                    label_display_details_heading.config(anchor='w', justify='left', text="\t\tSystem Details")
+                    label_information.config(text=f"System name: \t\t\t{system.name} \n"
+                                                  f"Number of buses: \t\t\t{system.numBuses} \n"
+                                                  f"Number of generators: \t\t{system.numGenerators} \n"
+                                                  f"Number of loads: \t\t\t{system.numLoads} \n"
+                                                  f"Number of distribution lines: \t\t{system.numDistributionLines} \n"
+                                                  f"Number of transmission lines: \t{system.numTransmissionLines}")
+        else:
+            label_information.config(text="")
 
     label_distribution_systems_listbox = tk.Label(root, text="System List:", anchor='w', bd=5)
     label_distribution_systems_listbox.place(relx=0.01, rely=0.3, relwidth=0.14, relheight=0.05)
 
-    button_display_details = tk.Button(root, text="Details", command=display_details, bg="white", fg="black")
-    button_display_details.place(relx=0.16, rely=0.3, relwidth=0.08, relheight=0.05)
+    # label_display_details = tk.Label(root, text="System Details", bd=5)
+    # label_display_details.place(relx=0.16, rely=0.3, relwidth=0.14, relheight=0.05)
 
     listbox_distribution_systems = tk.Listbox(root)
     listbox_distribution_systems.place(relx=0.01, rely=0.36, relwidth=0.14, relheight=0.25)
+    listbox_distribution_systems.bind("<<ListboxSelect>>", display_details)
 
     scrollbar_distribution_systems_list = tk.Scrollbar(listbox_distribution_systems, orient="vertical")
     listbox_distribution_systems.config(yscrollcommand=scrollbar_distribution_systems_list.set)
@@ -62,13 +68,17 @@ def network_details(root, distribution_systems):
     for system in distribution_systems:
         listbox_distribution_systems.insert('end', system.name)
 
-    label_information = tk.Label(root, anchor='nw', justify='left', font=("", "12"))
-    label_information.place(relx=0.16, rely=0.36, relwidth=0.73, relheight=0.25)
+    label_display_details_heading = tk.Label(root, text="Select a system", anchor='n', justify='center', font=("", "10"), bd=2)
+    label_display_details_heading.place(relx=0.16, rely=0.36, relwidth=0.73, relheight=0.04)
+
+    label_information = tk.Label(root, anchor='nw', justify='left', font=("", "10"))
+    label_information.place(relx=0.16, rely=0.4, relwidth=0.73, relheight=0.21)
 
 
 def algorithm_parameters(root, distribution_systems, input_dir, network_name, num_systems):
     def solve():
 
+        results = {}
         num_iterations = 0
         deviation_penalty = 0.0
         tolerance = 0.0
@@ -96,13 +106,19 @@ def algorithm_parameters(root, distribution_systems, input_dir, network_name, nu
             messagebox.showerror("Invalid Entry!", "Number of iteration must be a positive integer greater than 0.")
 
         if not (num_iterations == 0 or deviation_penalty == 0.0 or tolerance == 0.0):
-            main_loop(distribution_systems, input_dir, network_name, num_systems, num_iterations, deviation_penalty, tolerance, root)
+            results = main_loop(distribution_systems, input_dir, network_name, num_systems, num_iterations, deviation_penalty, tolerance)
 
-        button_charts = tk.Button(root, text="Charts", command=charts, bg="white", fg="black")
-        button_charts.place(relx=0.9, rely=0.74, relwidth=0.08, relheight=0.05)
+        cost_gap = "${:,.2f}".format((results['total_cost'][results['iteration_count'] - 1] - results['total_cost'][results['iteration_count']]) / results['total_cost'][results['iteration_count'] - 1])
+        final_cost = "${:,.2f}".format(results['total_cost'][results['iteration_count']])
+
+        label_results.config(text=f"Iteration count: {results['iteration_count'] + 1} \n"
+                                  f"Achieved cost gap: {cost_gap} \n"
+                                  f"Final total cost: {final_cost}")
+
+        button_charts.config(state="normal")
 
     def charts():
-        print("charts")
+        create_plots()
 
     canvas_user_inputs = tk.Canvas(root, bg="#80c1ff")
     canvas_user_inputs.place(relx=0.075, rely=0.65, relwidth=0.87, relheight=0.26)
@@ -128,3 +144,9 @@ def algorithm_parameters(root, distribution_systems, input_dir, network_name, nu
 
     button_solve = tk.Button(root, text="Solve", command=solve, bg="white", fg="black")
     button_solve.place(relx=0.17, rely=0.88, relwidth=0.08, relheight=0.05)
+
+    label_results = tk.Label(root, anchor='w', justify='left', font=("", "12"), bd=10)
+    label_results.place(relx=0.27, rely=0.67, relwidth=0.62, relheight=0.19)
+
+    button_charts = tk.Button(root, text="Charts", command=charts, bg="white", fg="black", state="disabled")
+    button_charts.place(relx=0.9, rely=0.74, relwidth=0.08, relheight=0.05)
