@@ -40,8 +40,8 @@ class DistributionSystemModel(object):
                 - quicksum(self.active_load[d] if distribution_system.loads[d].bus == b + 1 else 0 for d in range(distribution_system.numLoads)) \
                 - quicksum(distribution_system.distribution_lines[e].conductance * self.distribution_line_conductance[e] if distribution_system.distribution_lines[e].source == b + 1 else 0 for e in range(distribution_system.numDistributionLines)) \
                 + quicksum(distribution_system.distribution_lines[e].susceptance * self.distribution_line_susceptance[e] if distribution_system.distribution_lines[e].source == b + 1 else 0 for e in range(distribution_system.numDistributionLines)) \
-                - distribution_system.buses[b].conductance * self.bus_voltage[b]
-                # - quicksum(self.active_line_transmission[e] if distribution_system.transmission_lines[e].source == b + 1 else 0 for e in range(distribution_system.numTransmissionLines)) \
+                - distribution_system.buses[b].conductance * self.bus_voltage[b] \
+                - quicksum(self.active_line_transmission[e] if distribution_system.transmission_lines[e].source == b + 1 else 0 for e in range(distribution_system.numTransmissionLines)) \
 
             self.model.addConstr(expression == 0, name=f"Active_Flow_Balance[{b}]")
 

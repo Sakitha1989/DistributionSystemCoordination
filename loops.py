@@ -13,6 +13,7 @@ import numpy.random
 from model import DistributionSystemModel
 from readingData import DistributionSystem, TransmissionSystem
 from solution import DistributionSystemSolution, TransmissionSolution
+from print import transmission_solution_writer
 from GUI import *
 
 
@@ -73,6 +74,7 @@ def main_loop(distribution_system, input_dir, network_name, num_systems, num_ite
             comparison.append(distribution_system_solution[system_number].comparison_test)
 
         total_cost.append(cost)
+        transmission_solution_writer(cost, transmission_system_solution, iteration_count)
 
         if all(comparison):
             break

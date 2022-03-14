@@ -4,13 +4,12 @@
 # Project:  Distribution system coordination
 ######################################################################################################################
 
-import PySimpleGUI as sg
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import messagebox
+from tkinter import ttk
 import os
 
-from analysis import display_graphs
 from userInputs import user_inputs
 
 
@@ -25,21 +24,22 @@ def main_frame(root):
 
         if not label_directory_display["text"] == "" and os.path.exists(label_directory_display["text"]):
             directory = label_directory_display["text"]
-            input_dir = directory + r"/inputData/"
-            if not entry_network.get() == "" and os.path.exists(input_dir + entry_network.get() + r"/"):
-                network_name = entry_network.get()
-                input_dir = input_dir + network_name + r"/"
-                if not entry_system.get() == "" and os.path.exists(input_dir + entry_system.get() + str(1) + r"/"):
+            os.chdir(directory)
+            if not combo_network.get() == "" and os.path.exists(directory + r"/" + combo_network.get() + r"/"):
+                network_name = combo_network.get()
+                directory += r"/" + network_name
+                if not entry_system.get() == "" and os.path.exists(directory + r"/" + entry_system.get() + str(1) + r"/"):
                     system_name = entry_system.get()
-                    if not int(label_num_system_num['text']) == 0 and len(os.listdir(input_dir)) > int(
-                            label_num_system_num['text']):
+                    if not int(label_num_system_num['text']) == 0 and len(os.listdir(directory)) > int(label_num_system_num['text']):
                         num_systems = int(label_num_system_num['text'])
                     else:
                         response_system_number = messagebox.askokcancel("System Error!",
-                                                                        f"{len(os.listdir(input_dir)) - 1} systems available. "
-                                                                        f"\n Continue with {len(os.listdir(input_dir)) - 1} systems?")
+                                                                        f"{len(os.listdir(directory)) - 1} systems available. "
+                                                                        f"\nContinue with {len(os.listdir(directory)) - 1} systems?")
                         if response_system_number == 1:
-                            num_systems = len(os.listdir(input_dir)) - 1
+                            num_systems = len(os.listdir(directory)) - 1
+                            label_num_system_num['text'] = num_systems
+                            scale_num_system.set(num_systems)
                         else:
                             pass
                 else:
@@ -55,7 +55,8 @@ def main_frame(root):
 
     def clear_all_inputs():
         label_directory_display["text"] = " "
-        entry_network.delete(0, 'end')
+        combo_network.delete(0, 'end')
+        combo_network.config(state="disabled")
         entry_system.delete(0, 'end')
         label_num_system_num['text'] = "0"
         scale_num_system.set(0)
@@ -65,11 +66,16 @@ def main_frame(root):
         label_num_system_num['text'] = scale_num_system.get()
 
     def search_directory():
-        filename = filedialog.askdirectory(
-            initialdir=r"C:/Users/sakit/Documents/Academic/Research/CoordinationSystem/CoordinationDisSys",
+
+        directory = filedialog.askdirectory(
+            initialdir=r"C:/Users/sakit/Documents/Academic/Research/CoordinationSystem/CoordinationDisSys/inputData",
             title="Select a directory")
-        label_directory_display["text"] = filename
-        scale_num_system.config(state="normal")
+        label_directory_display["text"] = directory
+
+        if not directory == "":
+            scale_num_system.config(state="normal")
+            combo_network.config(state="normal", values=os.listdir(directory))
+            combo_network.bind("<<ComboboxSelected>>")
 
     canvas_user_inputs = tk.Canvas(root, bg="#80c1ff")
     canvas_user_inputs.place(relx=0.075, rely=0.035, relwidth=0.87, relheight=0.25)
@@ -86,21 +92,19 @@ def main_frame(root):
     label_network = tk.Label(root, text="Network Name:", anchor='w', bd=5)
     label_network.place(relx=0.01, rely=0.07, relwidth=0.14, relheight=0.05)
 
-    entry_network = tk.Entry(root)
-    entry_network.place(relx=0.16, rely=0.07, relwidth=0.73, relheight=0.05)
+    combo_network = ttk.Combobox(root, state="disabled")
+    combo_network.place(relx=0.16, rely=0.07, relwidth=0.73, relheight=0.05)
 
     label_system = tk.Label(root, text="System Name:", anchor='w', bd=5)
     label_system.place(relx=0.01, rely=0.14, relwidth=0.14, relheight=0.05)
 
-    entry_system = tk.Entry(root)
+    entry_system = tk.Entry(root, bg="white", fg="black")
     entry_system.place(relx=0.16, rely=0.14, relwidth=0.73, relheight=0.05)
 
     label_num_system = tk.Label(root, text="Number of Systems:", anchor='w', bd=5)
     label_num_system.place(relx=0.01, rely=0.20, relwidth=0.14, relheight=0.05)
 
-    scale_num_system = tk.Scale(root, from_=0, to=10, orient="horizontal", showvalue=False,
-                                command=update_num_systems,
-                                state="disabled")
+    scale_num_system = tk.Scale(root, from_=0, to=10, orient="horizontal", showvalue=False, command=update_num_systems, state="disabled")
     scale_num_system.place(relx=0.22, rely=0.20, relwidth=0.67, relheight=0.05)
 
     label_num_system_num = tk.Label(root, text="0", bd=5)
