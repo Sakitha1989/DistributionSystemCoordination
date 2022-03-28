@@ -54,7 +54,8 @@ class Line(object):
         self.id = int(attribute_list['LineID'])
         self.source = int(attribute_list['fbus'])
         self.destination = int(attribute_list['tbus'])
-        self.max_flow = 99999
+        self.max_flow = 99999  # *******************************************************************************************************
+        self.base = 10000  # ***********************************************************************************************************
         self.susceptance = 1/float(attribute_list['x'])
         self.conductance = 1/float(attribute_list['r'])
 
@@ -74,7 +75,7 @@ class TransmissionLine(Line):
 class DistributionSystem(object):
     def __init__(self, system_name):
         self.name = system_name
-        self.VOLL = 1000
+        self.VOLL = 1000  # *************************************************************************************************************
         self.numGenerators = 0
         self.numLoads = 0
         self.numBuses = 0

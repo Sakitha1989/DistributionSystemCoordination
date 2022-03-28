@@ -104,7 +104,7 @@ def algorithm_parameters(root, distribution_systems, input_dir, network_name, nu
         except ValueError:
             messagebox.showerror("Invalid Entry!", "Number of iteration must be a positive integer greater than 0.")
 
-        if not (num_iterations == 0 or deviation_penalty == 0.0 or tolerance == 0.0):
+        if not (num_iterations == 0 and deviation_penalty < 0.0 and tolerance < 0.0):
             results = main_loop(distribution_systems, input_dir, network_name, num_systems, num_iterations, deviation_penalty, tolerance)
 
         cost_gap = "${:,.2f}".format((results['total_cost'][results['iteration_count'] - 1] - results['total_cost'][results['iteration_count']]) / results['total_cost'][results['iteration_count'] - 1])

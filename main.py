@@ -11,6 +11,10 @@
 # The script assumes that there are 'inputData' and 'outputData' folders exist inside the directory. Also, inside the
 # 'inputData' folder there must be folder for the system containing all the data files.
 
+# VOLL has set to 1000
+# max flow on lines has set 99999
+# base value for conductance and susceptance has set to 10000
+
 import numpy as np
 import numpy.random
 

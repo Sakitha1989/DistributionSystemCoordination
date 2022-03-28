@@ -32,13 +32,14 @@ def create_plots(num_systems):
                 if len(var_list) == 0:
                     messagebox.showerror("Selection Error!", "Select at least one variable name from the variable names list")
 
-                if len(var_list) == 1:
+                elif len(var_list) == 1:
                     plt.plot(data[var_list[0]], marker='o')
                     plt.title("Convergence of " + var_list[0] + "\n", fontsize=14)
                     plt.xlabel('Iteration count')
                     plt.ylabel(var_list[0])
 
                 else:
+                    listbox_system_variable_names.select_clear(0, 'end')
                     for item in var_list:
                         plt.plot(data[item],  marker='o')
                         plt.title("Convergence comparison \n", fontsize=14)
